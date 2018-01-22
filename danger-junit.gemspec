@@ -19,7 +19,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_runtime_dependency 'danger', '> 2.0'
-  spec.add_runtime_dependency 'ox', '~> 2.0'
+  spec.add_runtime_dependency 'nokogiri'
 
   # So we can run our specs with junit
   spec.add_development_dependency 'rspec_junit_formatter', '~> 0.2'

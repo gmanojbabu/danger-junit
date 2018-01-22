@@ -85,40 +85,62 @@ module Danger
     # will `raise` for errors
     # @return   [void]
     def parse(file)
-      require 'ox'
-      raise "No JUnit file was found at #{file}" unless File.exist? file
+#      require 'ox'
+#      raise "No JUnit file was found at #{file}" unless File.exist? file
+#
+#      xml_string = File.read(file)
+#      @doc = Ox.parse(xml_string)
+#
+#      suite_root = @doc.nodes.first.value == 'testsuites' ? @doc.nodes.first : @doc
+#      @tests = suite_root.nodes.map(&:nodes).flatten.select { |node| node.kind_of?(Ox::Element) && node.value == 'testcase' }
+#
+#      failed_suites = suite_root.nodes.select { |suite| suite[:failures].to_i > 0 || suite[:errors].to_i > 0 }
+#      failed_tests = failed_suites.map(&:nodes).flatten.select { |node| node.kind_of?(Ox::Element) && node.value == 'testcase' }
+#
+#      @failures = failed_tests.select do |test| 
+#        test.nodes.count > 0
+#      end.select do |test|
+#        node = test.nodes.first
+#        node.kind_of?(Ox::Element) && node.value == 'failure'
+#      end
+#
+#      @errors = failed_tests.select do |test| 
+#        test.nodes.count > 0
+#      end.select do |test| 
+#        node = test.nodes.first
+#        node.kind_of?(Ox::Element) && node.value == 'error'
+#      end
+#
+#      @skipped = tests.select do |test| 
+#        test.nodes.count > 0
+#      end.select do |test| 
+#        node = test.nodes.first
+#        node.kind_of?(Ox::Element) && node.value == 'skipped'
+#      end
+#
+#      @passes = tests - @failures - @errors - @skipped
+        
+        require 'nokogiri'
+        raise "No JUnit file was found at #{file}" unless File.exist? file
+        
+        xml_string = File.read(file)
+        @doc = Nokogiri.XML(xml_string)
+        
+        @tests = @doc.xpath("//testsuites/testsuite/testcase")
+        #puts @tests.first.name
+        @test_suite = @doc.xpath("//testsuites/testsuite")
+        puts @tests.count
+        
+        @failures = @doc.xpath("//testsuites/testsuite/testcase/failure")
+        puts @failures.count
+        
+        @skipped = @doc.xpath("//testsuites/testsuite/testcase/skipped")
+        puts @skipped.count
 
-      xml_string = File.read(file)
-      @doc = Ox.parse(xml_string)
-
-      suite_root = @doc.nodes.first.value == 'testsuites' ? @doc.nodes.first : @doc
-      @tests = suite_root.nodes.map(&:nodes).flatten.select { |node| node.kind_of?(Ox::Element) && node.value == 'testcase' }
-
-      failed_suites = suite_root.nodes.select { |suite| suite[:failures].to_i > 0 || suite[:errors].to_i > 0 }
-      failed_tests = failed_suites.map(&:nodes).flatten.select { |node| node.kind_of?(Ox::Element) && node.value == 'testcase' }
-
-      @failures = failed_tests.select do |test| 
-        test.nodes.count > 0
-      end.select do |test|
-        node = test.nodes.first
-        node.kind_of?(Ox::Element) && node.value == 'failure'
-      end
-
-      @errors = failed_tests.select do |test| 
-        test.nodes.count > 0
-      end.select do |test| 
-        node = test.nodes.first
-        node.kind_of?(Ox::Element) && node.value == 'error'
-      end
-
-      @skipped = tests.select do |test| 
-        test.nodes.count > 0
-      end.select do |test| 
-        node = test.nodes.first
-        node.kind_of?(Ox::Element) && node.value == 'skipped'
-      end
-
-      @passes = tests - @failures - @errors - @skipped
+        @errors = @doc.xpath("//testsuites/testsuite/testcase/error")
+        puts @errors.count
+        
+        @passes = @tests - @failures - @errors - @skipped
     end
 
     # Causes a build fail if there are test failures,
